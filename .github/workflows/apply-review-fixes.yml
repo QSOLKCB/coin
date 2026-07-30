@@ -1,0 +1,69 @@
+name: Apply Copilot review fixes
+
+on:
+  push:
+    branches:
+      - agent/coin-rotation-paradox-lab
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out review branch
+        uses: actions/checkout@v4
+        with:
+          ref: agent/coin-rotation-paradox-lab
+          fetch-depth: 0
+
+      - name: Apply review fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          index_path = Path("index.html")
+          index_text = index_path.read_text(encoding="utf-8")
+          old_csp = "style-src 'self' 'unsafe-inline';"
+          new_csp = "style-src 'self';"
+          if old_csp not in index_text:
+              raise SystemExit("Expected CSP fragment was not found")
+          index_path.write_text(index_text.replace(old_csp, new_csp, 1), encoding="utf-8")
+
+          app_path = Path("app.js")
+          app_text = app_path.read_text(encoding="utf-8")
+          old_clear = '''  function clear(width, height) {
+            context.save();
+            context.setTransform(1, 0, 0, 1, 0, 0);
+            context.fillStyle = palette.background;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.restore();
+
+            context.save();
+            context.fillStyle = palette.background;
+            context.fillRect(0, 0, width, height);
+            context.restore();
+          }'''
+          new_clear = '''  function clear(width, height) {
+            context.save();
+            context.fillStyle = palette.background;
+            context.fillRect(0, 0, width, height);
+            context.restore();
+          }'''
+          if old_clear not in app_text:
+              raise SystemExit("Expected clear() implementation was not found")
+          app_path.write_text(app_text.replace(old_clear, new_clear, 1), encoding="utf-8")
+          PY
+
+      - name: Run smoke suite
+        run: node tests/smoke.mjs
+
+      - name: Commit fixes and remove one-shot workflow
+        run: |
+          rm .github/workflows/apply-review-fixes.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Address Copilot review comments"
+          git push origin HEAD:agent/coin-rotation-paradox-lab
