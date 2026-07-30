@@ -1,0 +1,108 @@
+name: Patch PR 1 review comments
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Patch the pull-request branch
+        run: |
+          git fetch origin agent/coin-rotation-paradox-lab
+          git checkout agent/coin-rotation-paradox-lab
+          python3 - <<'PY'
+          from pathlib import Path
+
+          index_path = Path("index.html")
+          index_text = index_path.read_text(encoding="utf-8")
+          old_csp = "style-src 'self' 'unsafe-inline';"
+          if old_csp not in index_text:
+              raise SystemExit("Expected CSP fragment was not found")
+          index_path.write_text(
+              index_text.replace(old_csp, "style-src 'self';", 1),
+              encoding="utf-8",
+          )
+
+          app_path = Path("app.js")
+          app_text = app_path.read_text(encoding="utf-8")
+          old_clear = '''  function clear(width, height) {
+            context.save();
+            context.setTransform(1, 0, 0, 1, 0, 0);
+            context.fillStyle = palette.background;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.restore();
+
+            context.save();
+            context.fillStyle = palette.background;
+            context.fillRect(0, 0, width, height);
+            context.restore();
+          }'''
+          new_clear = '''  function clear(width, height) {
+            context.save();
+            context.fillStyle = palette.background;
+            context.fillRect(0, 0, width, height);
+            context.restore();
+          }'''
+          if old_clear not in app_text:
+              raise SystemExit("Expected clear() implementation was not found")
+          app_path.write_text(
+              app_text.replace(old_clear, new_clear, 1),
+              encoding="utf-8",
+          )
+          PY
+
+          rm -f .github/workflows/apply-review-fixes.yml
+          cat > .github/workflows/ci.yml <<'YAML'
+          name: CI
+
+          on:
+            push:
+              branches:
+                - main
+                - "agent/**"
+            pull_request:
+              branches:
+                - main
+
+          permissions:
+            contents: read
+
+          jobs:
+            smoke:
+              runs-on: ubuntu-latest
+              steps:
+                - name: Check out repository
+                  uses: actions/checkout@v4
+                - name: Use Node.js
+                  uses: actions/setup-node@v4
+                  with:
+                    node-version: 22
+                - name: Run offline smoke suite
+                  run: node tests/smoke.mjs
+          YAML
+
+          node tests/smoke.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Address Copilot review comments"
+          git push origin HEAD:agent/coin-rotation-paradox-lab
+
+      - name: Remove this one-shot workflow from main
+        run: |
+          git checkout main
+          git pull --ff-only origin main
+          git rm .github/workflows/patch-pr-1.yml
+          git commit -m "Remove temporary PR review workflow"
+          git push origin main
