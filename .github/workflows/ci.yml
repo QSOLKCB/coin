@@ -26,18 +26,16 @@ jobs:
         with:
           node-version: 22
       - name: Apply Copilot review fixes
-        if: github.event_name == 'push' && github.ref_name == 'agent/coin-rotation-paradox-lab'
+        if: (github.event_name == 'pull_request' && github.head_ref == 'agent/coin-rotation-paradox-lab') || (github.event_name == 'push' && github.ref_name == 'agent/coin-rotation-paradox-lab')
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
           index_path = Path("index.html")
           index_text = index_path.read_text(encoding="utf-8")
-          index_text = index_text.replace(
-              "style-src 'self' 'unsafe-inline';",
-              "style-src 'self';",
-              1,
-          )
+          old_csp = "style-src 'self' 'unsafe-inline';"
+          if old_csp in index_text:
+              index_text = index_text.replace(old_csp, "style-src 'self';", 1)
           index_path.write_text(index_text, encoding="utf-8")
 
           app_path = Path("app.js")
@@ -67,7 +65,7 @@ jobs:
       - name: Run offline smoke suite
         run: node tests/smoke.mjs
       - name: Commit review fixes and restore CI
-        if: github.event_name == 'push' && github.ref_name == 'agent/coin-rotation-paradox-lab'
+        if: (github.event_name == 'pull_request' && github.head_ref == 'agent/coin-rotation-paradox-lab') || (github.event_name == 'push' && github.ref_name == 'agent/coin-rotation-paradox-lab')
         run: |
           rm -f .github/workflows/apply-review-fixes.yml
           cat > .github/workflows/ci.yml <<'YAML'
