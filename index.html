@@ -1,0 +1,299 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta
+    name="description"
+    content="An offline interactive laboratory for the coin rotation paradox, reference frames, epicycloids, hypocycloids, and no-slip rolling."
+  >
+  <meta
+    http-equiv="Content-Security-Policy"
+    content="default-src 'self' data: blob:; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; media-src blob:;"
+  >
+  <title>Coin Rotation Paradox Lab</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="brand-mark" aria-hidden="true">
+      <span>CR</span>
+      <b>+1</b>
+    </div>
+    <div class="brand-copy">
+      <p class="eyebrow">OFFLINE REFERENCE-FRAME INSTRUMENT</p>
+      <h1>Coin Rotation Paradox Lab</h1>
+      <p>One motion. Several valid counts. The “extra” turn is the orbiting tangent frame.</p>
+    </div>
+    <nav class="header-status" aria-label="Project status">
+      <a href="https://github.com/QSOLKCB/coin">source</a>
+      <span class="status-chip"><i aria-hidden="true"></i>local · no upload</span>
+      <span class="concept-chip">MPL-2.0</span>
+    </nav>
+  </header>
+
+  <main class="app-shell">
+    <aside class="control-rack" aria-label="Coin paradox laboratory controls">
+      <section class="rack-section">
+        <div class="section-label"><span>01</span>Geometry</div>
+
+        <div class="preset-grid" aria-label="Geometry presets">
+          <button type="button" data-preset="equal" class="active">Equal coins</button>
+          <button type="button" data-preset="sat">R : r = 3 : 1</button>
+          <button type="button" data-preset="cardioid">Cardioid</button>
+          <button type="button" data-preset="internal">Internal 2 : 1</button>
+        </div>
+
+        <label for="mode">
+          Rolling mode
+          <select id="mode">
+            <option value="external">External · epicycloid</option>
+            <option value="internal">Internal · hypocycloid</option>
+          </select>
+        </label>
+
+        <label for="fixedRadius">
+          Fixed-circle radius R
+          <output id="fixedRadiusValue" for="fixedRadius">1.00</output>
+          <input id="fixedRadius" type="range" min="25" max="500" value="100" step="5">
+        </label>
+
+        <label for="coinRadius">
+          Rolling-coin radius r
+          <output id="coinRadiusValue" for="coinRadius">1.00</output>
+          <input id="coinRadius" type="range" min="10" max="300" value="100" step="5">
+        </label>
+
+        <p id="geometryNote" class="control-note">
+          Equal external circles: the rolling centre follows radius R + r = 2r.
+        </p>
+      </section>
+
+      <section class="rack-section transport-section">
+        <div class="section-label"><span>02</span>Evolution</div>
+        <div class="transport-row">
+          <button id="playToggle" class="primary" type="button" aria-pressed="true">Pause orbit</button>
+          <button id="resetOrbit" type="button">Reset phase</button>
+        </div>
+
+        <label for="phase">
+          Orbital phase α
+          <output id="phaseValue" for="phase">0°</output>
+          <input id="phase" type="range" min="0" max="3600" value="0" step="1">
+        </label>
+
+        <label for="speed">
+          Orbit speed
+          <output id="speedValue" for="speed">0.12 turn/s</output>
+          <input id="speed" type="range" min="1" max="150" value="12" step="1">
+        </label>
+
+        <div class="direction-switch" role="group" aria-label="Orbit direction">
+          <button id="directionCCW" class="active" type="button" aria-pressed="true">↺ Counter-clockwise</button>
+          <button id="directionCW" type="button" aria-pressed="false">Clockwise ↻</button>
+        </div>
+
+        <p class="control-note">
+          Space pauses. Drag the phase slider to inspect an exact instant.
+        </p>
+      </section>
+
+      <section class="rack-section">
+        <div class="section-label"><span>03</span>Perspective</div>
+
+        <label for="view">
+          Receiver view
+          <select id="view">
+            <option value="comparison">Four-perspective comparison</option>
+            <option value="laboratory">Laboratory frame</option>
+            <option value="radial">Co-rotating radial frame</option>
+            <option value="unwrapped">Unwrapped tangent frame</option>
+            <option value="curve">Marker curve only</option>
+          </select>
+        </label>
+
+        <div class="check-grid">
+          <label class="check-row">
+            <input id="showCurve" type="checkbox" checked>
+            <span>Trace rim-marker curve</span>
+          </label>
+          <label class="check-row">
+            <input id="showCentrePath" type="checkbox" checked>
+            <span>Show rolling-centre path</span>
+          </label>
+          <label class="check-row">
+            <input id="showContact" type="checkbox" checked>
+            <span>Show no-slip contact</span>
+          </label>
+          <label class="check-row">
+            <input id="showGrid" type="checkbox" checked>
+            <span>Show reference grid</span>
+          </label>
+          <label class="check-row">
+            <input id="showLabels" type="checkbox" checked>
+            <span>Show frame labels</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="rack-section">
+        <div class="section-label"><span>04</span>Marker / measurement</div>
+
+        <label for="markerRadius">
+          Marker distance from coin centre
+          <output id="markerRadiusValue" for="markerRadius">100%</output>
+          <input id="markerRadius" type="range" min="0" max="150" value="100" step="1">
+        </label>
+
+        <label for="markerPhase">
+          Initial marker phase
+          <output id="markerPhaseValue" for="markerPhase">180°</output>
+          <input id="markerPhase" type="range" min="0" max="359" value="180" step="1">
+        </label>
+
+        <button id="placeAtContact" class="block" type="button">Place marker at initial contact</button>
+
+        <p class="control-note">
+          Rim marker = epicycloid outside, hypocycloid inside. Moving the marker creates an epitrochoid or hypotrochoid.
+        </p>
+      </section>
+
+      <section class="rack-section">
+        <div class="section-label"><span>05</span>Capture</div>
+        <div class="export-grid">
+          <button id="snapshot" type="button">Snapshot .PNG</button>
+          <button id="record" type="button">Record .WEBM</button>
+          <button id="exportState" type="button">Settings .JSON</button>
+          <label class="file-button" for="importState">
+            Load settings
+            <input id="importState" type="file" accept="application/json,.json">
+          </label>
+        </div>
+        <p id="captureStatus" class="control-note" role="status">
+          Capture stays inside this browser. Recording stops after 30 seconds.
+        </p>
+      </section>
+    </aside>
+
+    <section class="workspace">
+      <section class="model-heading" aria-labelledby="fieldTitle">
+        <div>
+          <p class="eyebrow">ACTIVE RECEIVER</p>
+          <h2 id="fieldTitle">Equal circles · external rolling</h2>
+        </div>
+        <p id="fieldSummary">
+          In the laboratory frame the coin turns twice; in the co-rotating radial frame it turns once.
+        </p>
+      </section>
+
+      <section class="visual-panel">
+        <header class="panel-head">
+          <div>
+            <p id="flowEyebrow" class="eyebrow">R : r = 1 : 1</p>
+            <h2>Reference-frame comparator</h2>
+          </div>
+          <div class="panel-badges">
+            <span id="modeBadge">external</span>
+            <span id="viewBadge">four perspectives</span>
+            <span id="recordingBadge" hidden>REC 00:00</span>
+          </div>
+        </header>
+
+        <div id="canvasStage" class="canvas-stage">
+          <canvas
+            id="fieldCanvas"
+            role="img"
+            aria-label="Animated rolling coin shown in laboratory, radial, unwrapped, and curve views."
+          ></canvas>
+          <div class="canvas-hint">same motion · different frames · Space to pause</div>
+        </div>
+
+        <div class="frame-legend" aria-label="Colour legend">
+          <span><i class="fixed-dot"></i>fixed circle R</span>
+          <span><i class="coin-dot"></i>rolling coin r</span>
+          <span><i class="marker-dot"></i>tracked marker</span>
+          <span><i class="path-dot"></i>centre path R ± r</span>
+        </div>
+      </section>
+
+      <section class="readout-panel" aria-label="Live rotation readout">
+        <div>
+          <span>Laboratory frame</span>
+          <strong id="labTurnsReadout">0.000 turns</strong>
+          <small id="labTurnsDetail">absolute coin orientation</small>
+        </div>
+        <div>
+          <span>Radial frame</span>
+          <strong id="radialTurnsReadout">0.000 turns</strong>
+          <small id="radialTurnsDetail">coin orientation minus orbit angle</small>
+        </div>
+        <div>
+          <span>Orbital frame</span>
+          <strong id="orbitTurnsReadout">0.000 turns</strong>
+          <small>the tangent direction itself turns</small>
+        </div>
+        <div>
+          <span>No-slip residual</span>
+          <strong id="noSlipReadout">0.00e+0</strong>
+          <small>contact-point speed in fixed frame</small>
+        </div>
+      </section>
+
+      <section class="equation-panel" aria-labelledby="equationTitle">
+        <div class="equation-mark" aria-hidden="true">+1</div>
+        <div>
+          <p class="eyebrow">THE WHOLE “PARADOX”</p>
+          <h2 id="equationTitle">Rolling contribution + turning reference frame</h2>
+          <div class="equation-grid">
+            <code id="labFormula">N_lab = (R + r) / r = R/r + 1</code>
+            <code id="radialFormula">N_radial = R / r</code>
+            <code id="centreFormula">C_center = 2π(R + r)</code>
+          </div>
+          <p id="equationExplanation">
+            For equal circles, the rolling centre travels a circle of radius 2r. Its path length is 4πr, exactly two rolling-coin circumferences.
+          </p>
+        </div>
+      </section>
+
+      <section class="perspective-panel" aria-labelledby="perspectiveTitle">
+        <div class="perspective-mark" aria-hidden="true">◐</div>
+        <div>
+          <p class="eyebrow">PARADOX DISCERNMENT</p>
+          <h2 id="perspectiveTitle">The counts disagree because the frames disagree—not because the geometry does.</h2>
+          <p>
+            The laboratory frame counts the coin against fixed space. The radial frame rotates once with the orbit, so it subtracts one turn. The unwrapped tangent view sees only rolling along the fixed boundary. Each answer is meaningful only after naming its frame.
+          </p>
+          <div class="perspective-tags">
+            <span>lab frame</span>
+            <span>co-rotating frame</span>
+            <span>tangent frame</span>
+            <span>epicycloid</span>
+            <span>no slip</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="boundary-panel">
+        <div class="boundary-mark" aria-hidden="true">≈</div>
+        <div>
+          <p class="eyebrow">INTERPRETATION BOUNDARY</p>
+          <h2>A planar kinematics lab—not evidence for a cosmological mechanism.</h2>
+          <p>
+            The same reference-frame lesson can inspire analogies in astronomy, polarization, gears, and orbital motion, but analogy is not identity. This lab solves the rolling-circle geometry it actually models and keeps broader claims clearly separated.
+          </p>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <span>Concept exchange: Sefray セーフ雷 × Trent Slade / QSOL-IMC · 2026</span>
+    <span>Offline · deterministic initial state · MPL-2.0</span>
+  </footer>
+
+  <script src="coin-core.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
