@@ -297,12 +297,6 @@
 
   function clear(width, height) {
     context.save();
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.fillStyle = palette.background;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.restore();
-
-    context.save();
     context.fillStyle = palette.background;
     context.fillRect(0, 0, width, height);
     context.restore();
